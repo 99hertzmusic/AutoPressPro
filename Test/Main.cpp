@@ -942,6 +942,7 @@ int main (int argc, char** argv)
     }
 
     hztest::runLicenceTests<APP> ("autopresspro", [] (APP& p) { return p.proUnlocked.load(); });
+    hztest::renderLicenceStates<APP> ("autopresspro", outDir);
     hztest::runSavedSettingsTests<APP> ([] (APP& p)
     {
         setParam (p, "type", (float) ap::punch); setParam (p, "attack", 3); setParam (p, "release", 1);
