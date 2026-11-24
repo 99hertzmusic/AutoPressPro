@@ -14,6 +14,7 @@ public:
     void resized() override;
     void setLocked (int value, bool locked);          // padlock on that key
     void showValue (int value);                       // which key is lit (the value that actually runs)
+    void markSaved (int value);                       // a locked key holding the project's saved value (-1 = none): drawn greyed
     std::function<bool (int value)> allowValue;       // return false to refuse a click (locked Pro value)
     int gap = 10;
 private:
@@ -41,6 +42,7 @@ class ProPanel : public juce::Component
 public:
     explicit ProPanel (AutoPressProAudioProcessor& p);
     void show (const juce::String& reason);
+    void licenceChanged();   // the processor's licence changed (another instance, trial expiry): redraw if open
     void paint (juce::Graphics&) override;
     void resized() override;
     void mouseDown (const juce::MouseEvent& e) override;   // click outside the card closes it
@@ -54,7 +56,7 @@ private:
     juce::TextEditor emailBox, keyBox;
     juce::ToggleButton subscribe { "Send me tips and offers" };
     juce::TextButton trialButton { "START 7-DAY FREE TRIAL" }, unlockButton { "UNLOCK" },
-                     buyButton { "BUY PRO" }, closeButton { "CLOSE" };
+                     buyButton { "UPGRADE" }, closeButton { "CLOSE" };
 };
 
 // Gain reduction over the last 2 seconds, with the input behind it.
@@ -105,6 +107,8 @@ private:
     juce::Rectangle<int> ledArea, meterArea, secType, secDyn, secPro, secOut;
     juce::String ledLabel, ledText, ledRightLabel, ledRightText;
     float ledProgress = -1.0f;
+    bool ledWarn = false, upgradeNudge = false;
+    int seenLicenceVersion = -1;
     float mIn = 0.0f, mOut = 0.0f, mGr = 0.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AutoPressProAudioProcessorEditor)

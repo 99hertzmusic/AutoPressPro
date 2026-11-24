@@ -67,7 +67,7 @@ if(AUTOPRESSPRO_BUILD_TEST)
     juce_add_console_app(AutoPressProTest PRODUCT_NAME "AutoPressProTest")
     target_sources(AutoPressProTest PRIVATE Test/Main.cpp ${AUTOPRESSPRO_SOURCES})
     target_compile_definitions(AutoPressProTest PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1
-        AUTOPRESSPRO_TEST=1 JucePlugin_VersionString="1.0.0")
+        AUTOPRESSPRO_TEST=1 JucePlugin_VersionString="1.0.0" JUCE_MODAL_LOOPS_PERMITTED=1)
     target_compile_features(AutoPressProTest PRIVATE cxx_std_17)
     target_link_libraries(AutoPressProTest PRIVATE AutoPressProData juce::juce_audio_utils juce::juce_dsp juce::juce_recommended_config_flags)
 endif()

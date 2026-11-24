@@ -37,8 +37,21 @@ AutoPressProAudioProcessor::AutoPressProAudioProcessor()
     pMix     = apvts.getRawParameterValue ("mix");
 
     setLicenceInfo (licence.check());
+    licenceWatcher = std::make_unique<hz::LicenceWatcher> (licence, licenceInfo, [this] (const hz::LicenceInfo& i) { setLicenceInfo (i); });
     worker = std::make_unique<LearnWorker> (*this);
     worker->startThread (juce::Thread::Priority::low);
+}
+
+bool AutoPressProAudioProcessor::usesUpgradeSettings() const
+{
+    using namespace ap::gate;
+    const int t = juce::jlimit (0, ap::numTypes - 1, (int) pType->load());
+    return proType[t]
+        || (proAttack  && (int) pAttack->load()  != ap::attackAuto)
+        || (proRelease && (int) pRelease->load() != ap::releaseAuto)
+        || (proRatio   && (int) pRatio->load()   != ap::ratioAuto)
+        || (proScHpf   && (int) pHpf->load()     != 0)
+        || (proDrive   && pDrive->load() > 0.05f);
 }
 
 AutoPressProAudioProcessor::~AutoPressProAudioProcessor()

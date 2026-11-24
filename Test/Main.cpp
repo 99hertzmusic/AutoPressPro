@@ -14,6 +14,7 @@
 #include <cmath>
 #include <map>
 #include <deque>
+#include "LicenceTests.h"
 
 using APP = AutoPressProAudioProcessor;
 static constexpr double SR = 48000.0;
@@ -821,7 +822,7 @@ static void snapshots (const juce::File& outDir, const Buf& drums)
     };
     snap ("ui-1-lite.png", hz::LicenceInfo::none, nullptr, nullptr);
     snap ("ui-2-lite-glue.png", hz::LicenceInfo::none, nullptr, [] (APP& p) { setParam (p, "type", 1); });
-    snap ("ui-3-lite-pro-panel.png", hz::LicenceInfo::none, "PUNCH IS A PRO COMPRESSOR TYPE", nullptr);
+    snap ("ui-3-lite-pro-panel.png", hz::LicenceInfo::none, "PUNCH IS AN UPGRADE COMPRESSOR TYPE", nullptr);
     snap ("ui-4-trial.png", hz::LicenceInfo::trial, nullptr, [] (APP& p) { setParam (p, "type", 2); });
     snap ("ui-5-trial-ended.png", hz::LicenceInfo::trialExpired, nullptr, nullptr);
     snap ("ui-6-trial-ended-panel.png", hz::LicenceInfo::trialExpired, "", nullptr);
@@ -830,6 +831,18 @@ static void snapshots (const juce::File& outDir, const Buf& drums)
     snap ("ui-8-pro-panel.png", hz::LicenceInfo::pro, "", nullptr);
     snap ("ui-9-learning.png", hz::LicenceInfo::none, nullptr, nullptr, false, (int) (2.6 * SR));
     snap ("ui-10-waiting.png", hz::LicenceInfo::none, nullptr, nullptr, false, 0);
+
+    // Licence states (Launch prep renders)
+    auto upgradeSettings = [] (APP& p) { setParam (p, "type", 2); setParam (p, "attack", 3); setParam (p, "ratio", 2); setParam (p, "schpf", 2); setParam (p, "drive", 35); };
+    snap ("licence-1-free.png", hz::LicenceInfo::none, nullptr, nullptr);
+    snap ("licence-2-free-panel.png", hz::LicenceInfo::none, "", nullptr);
+    snap ("licence-3-trial.png", hz::LicenceInfo::trial, nullptr, upgradeSettings);
+    snap ("licence-4-trial-panel.png", hz::LicenceInfo::trial, "", nullptr);
+    snap ("licence-5-trial-ended.png", hz::LicenceInfo::trialExpired, nullptr, nullptr);
+    snap ("licence-6-trial-ended-panel.png", hz::LicenceInfo::trialExpired, "", nullptr);
+    snap ("licence-7-licensed.png", hz::LicenceInfo::pro, nullptr, upgradeSettings);
+    snap ("licence-8-licensed-panel.png", hz::LicenceInfo::pro, "", nullptr);
+    snap ("licence-9-saved-upgrade-settings.png", hz::LicenceInfo::trialExpired, nullptr, upgradeSettings);
 }
 
 int main (int argc, char** argv)
@@ -918,7 +931,7 @@ int main (int argc, char** argv)
         if (! arg.containsChar ('=')) continue;
         const auto name = arg.upToFirstOccurrenceOf ("=", false, false);
         const auto info = hz::Licence::verify (arg.fromFirstOccurrenceOf ("=", false, false), "autopresspro");
-        const char* kinds[] = { "none", "trial", "pro", "trialExpired", "invalid" };
+        const char* kinds[] = { "none", "trial", "pro", "trialExpired", "invalid", "saveFailed" };
         std::printf ("  key %-14s -> %-12s daysLeft=%d\n", name.toRawUTF8(), kinds[(int) info.kind], info.daysLeft());
         hz::LicenceInfo::Kind want = hz::LicenceInfo::invalid;
         if (name == "pro") want = hz::LicenceInfo::pro;
@@ -928,6 +941,22 @@ int main (int argc, char** argv)
         check (info.kind == want, "key " + name + " -> " + kinds[(int) info.kind]);
     }
 
-    std::printf ("\n%s: %d failure(s)\n", failures == 0 ? "ALL PASS" : "FAILURES", failures);
-    return failures == 0 ? 0 : 1;
+    hztest::runLicenceTests<APP> ("autopresspro", [] (APP& p) { return p.proUnlocked.load(); });
+    hztest::runSavedSettingsTests<APP> ([] (APP& p)
+    {
+        setParam (p, "type", (float) ap::punch); setParam (p, "attack", 3); setParam (p, "release", 1);
+        setParam (p, "ratio", 2); setParam (p, "schpf", 2); setParam (p, "drive", 35);
+    });
+    {
+        // and the audio still falls back to free: no licence + saved upgrade settings = CLEAN, AUTO, no HPF, no drive
+        APP p; p.setLicenceInfo ({});
+        setParam (p, "type", (float) ap::punch); setParam (p, "attack", 3); setParam (p, "schpf", 2); setParam (p, "drive", 35);
+        const auto e = p.resolve (false, p.getLearned());
+        hztest::expect (p.usesUpgradeSettings() && e.type == ap::clean && e.attackAuto && e.hpf == 0 && e.drive == 0.0f,
+                        "no licence + saved upgrade settings: flagged, plays as free");
+    }
+    const int licFails = hztest::finish();
+
+    std::printf ("\n%s: %d failure(s)\n", failures == 0 && licFails == 0 ? "ALL PASS" : "FAILURES", failures + hztest::failures);
+    return failures == 0 && licFails == 0 ? 0 : 1;
 }
