@@ -610,12 +610,9 @@ static juce::String fmtMs (float ms)
     if (std::abs (ms - std::round (ms)) < 0.05f) return juce::String (juce::roundToInt (ms)) + " MS";
     return juce::String (ms, 1) + " MS";
 }
-static juce::String fmtS (float ms)
+static juce::String fmtRelMs (float ms)
 {
-    const float s = ms / 1000.0f;
-    juce::String t = s < 1.0f ? juce::String (s, 2) : juce::String (s, 1);
-    if (t.contains (".")) { while (t.endsWithChar ('0')) t = t.dropLastCharacters (1); if (t.endsWithChar ('.')) t = t.dropLastCharacters (1); }
-    return t + " S";
+    return juce::String (juce::roundToInt (ms)) + " MS";
 }
 static juce::String fmtRatio (float r)
 {
@@ -663,7 +660,7 @@ AutoPressProAudioProcessorEditor::AutoPressProAudioProcessorEditor (AutoPressPro
 
     addKnob ("threshold", "THRESHOLD");
     addKnob ("attack", "ATTACK", { ".1", ".3", "1", "3", "10", "30", "A" });
-    addKnob ("release", "RELEASE", { ".1", ".3", ".6", "1.2", "A" });
+    addKnob ("release", "RELEASE", { "100", "300", "600", "1200", "A" });
     addKnob ("ratio", "RATIO", { "1.5", "2", "4", "10", "A" });
     addKnob ("schpf", "SC FILTER", { "OFF", "60", "90", "150" });
     addKnob ("drive", "DRIVE");
@@ -885,7 +882,7 @@ void AutoPressProAudioProcessorEditor::timerCallback()
     knob ("threshold")->value = learned ? juce::String (e.threshDb, 1) + " DB" : "--";
     // Before the first learn AUTO has nothing to show yet.
     knob ("attack")->value  = e.attackAuto ? (learned ? "AUTO " + fmtMs (e.attackMs) : juce::String ("AUTO")) : fmtMs (e.attackMs);
-    knob ("release")->value = e.releaseAuto ? (learned ? "AUTO " + fmtS (e.releaseMs) : juce::String ("AUTO")) : fmtS (e.releaseMs);
+    knob ("release")->value = e.releaseAuto ? (learned ? "AUTO " + fmtRelMs (e.releaseMs) : juce::String ("AUTO")) : fmtRelMs (e.releaseMs);
     knob ("ratio")->value   = e.ratioAuto ? (learned ? "AUTO " + fmtRatio (e.ratio) : juce::String ("AUTO")) : fmtRatio (e.ratio);
     if (e.type == ap::warm && (learned || ! e.ratioAuto)) knob ("ratio")->value = (e.ratioAuto ? "AUTO UP TO " : "UP TO ") + fmtRatio (e.ratio);
     knob ("schpf")->value   = e.hpf == 0 ? "OFF" : juce::String ((int) ap::hpfStepsHz[e.hpf]) + " HZ";
@@ -923,8 +920,8 @@ void AutoPressProAudioProcessorEditor::timerCallback()
     else
     {
         ledLabel = juce::String (ap::materialName (Ld.material)) + juce::String::fromUTF8 (" \xc2\xb7 ") + ap::typeName (e.type);
-        if (e.attackAuto && e.releaseAuto) ledText = "AUTO " + fmtMs (e.attackMs) + " / " + fmtS (e.releaseMs);
-        else ledText = juce::String (e.attackAuto ? "AUTO " : "") + fmtMs (e.attackMs) + " / " + (e.releaseAuto ? "AUTO " : "") + fmtS (e.releaseMs);
+        if (e.attackAuto && e.releaseAuto) ledText = "AUTO " + fmtMs (e.attackMs) + " / " + fmtRelMs (e.releaseMs);
+        else ledText = juce::String (e.attackAuto ? "AUTO " : "") + fmtMs (e.attackMs) + " / " + (e.releaseAuto ? "AUTO " : "") + fmtRelMs (e.releaseMs);
     }
 
     ledWarn = false;

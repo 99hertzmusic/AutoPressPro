@@ -74,7 +74,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AutoPressProAudioProcessor::
     l.add (std::make_unique<AudioParameterChoice> (id ("attack"), "Attack",
                StringArray { "0.1 ms", "0.3 ms", "1 ms", "3 ms", "10 ms", "30 ms", "Auto" }, ap::attackAuto));
     l.add (std::make_unique<AudioParameterChoice> (id ("release"), "Release",
-               StringArray { "0.1 s", "0.3 s", "0.6 s", "1.2 s", "Auto" }, ap::releaseAuto));
+               StringArray { "100 ms", "300 ms", "600 ms", "1200 ms", "Auto" }, ap::releaseAuto));
     l.add (std::make_unique<AudioParameterChoice> (id ("ratio"), "Ratio",
                StringArray { "1.5:1", "2:1", "4:1", "10:1", "Auto" }, ap::ratioAuto));
     l.add (std::make_unique<AudioParameterChoice> (id ("schpf"), "Sidechain HPF", StringArray { "Off", "60 Hz", "90 Hz", "150 Hz" }, 0));

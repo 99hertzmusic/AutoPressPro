@@ -697,7 +697,7 @@ static void liteTests (const ap::Learned& l, const Buf& drums)
     {
         auto lite = mk (false); proSettings (*lite, type);
         const float d = maxDiff (run (*lite, drums, len));
-        check (d == 0.0f, juce::String ("Lite + automation to ") + ap::typeName (type) + " / 0.1 ms / 1.2 s / 10:1 / 150 Hz / drive 100 = plain Lite (max diff " + juce::String (d) + ")");
+        check (d == 0.0f, juce::String ("Lite + automation to ") + ap::typeName (type) + " / 0.1 ms / 1200 ms / 10:1 / 150 Hz / drive 100 = plain Lite (max diff " + juce::String (d) + ")");
     }
     // Saved Pro session opened in Lite
     {
